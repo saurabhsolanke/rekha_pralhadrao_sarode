@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const beepAudioRef = useRef<HTMLAudioElement>(null);
+  const votingAudioRef = useRef<HTMLAudioElement>(null);
 
   const handleVoteClick = () => {
     setIsModalOpen(true);
@@ -10,9 +11,13 @@ function App() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (beepAudioRef.current) {
+      beepAudioRef.current.pause();
+      beepAudioRef.current.currentTime = 0;
+    }
+    if (votingAudioRef.current) {
+      votingAudioRef.current.pause();
+      votingAudioRef.current.currentTime = 0;
     }
   };
 
@@ -24,10 +29,35 @@ function App() {
   };
 
   useEffect(() => {
-    if (isModalOpen && audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error("Error playing audio:", error);
-      });
+    if (isModalOpen) {
+      const beepAudio = beepAudioRef.current;
+      const votingAudio = votingAudioRef.current;
+      
+      const handleBeepEnded = () => {
+        // When beep.mp3 ends, play voting.aac
+        if (votingAudio) {
+          votingAudio.play().catch((error) => {
+            console.error("Error playing voting audio:", error);
+          });
+        }
+      };
+
+      // Set up event listener for beep audio
+      if (beepAudio) {
+        beepAudio.addEventListener('ended', handleBeepEnded);
+        
+        // Play beep.mp3 first
+        beepAudio.play().catch((error) => {
+          console.error("Error playing beep audio:", error);
+        });
+      }
+
+      // Cleanup function
+      return () => {
+        if (beepAudio) {
+          beepAudio.removeEventListener('ended', handleBeepEnded);
+        }
+      };
     }
   }, [isModalOpen]);
 
@@ -39,7 +69,7 @@ function App() {
         <div className="relative z-10 w-full max-w-7xl mx-auto">
           <img 
             className="w-full h-auto rounded-lg sm:rounded-xl md:rounded-2xl shadow-medium transition-all duration-500 hover:shadow-strong" 
-            src="/banner.jpeg" 
+            src="/baner3.jpeg" 
             alt="Banner"
             loading="eager"
           />
@@ -160,7 +190,8 @@ function App() {
                 <span className="text-xl sm:text-2xl">💬</span>
                 <span>शेअर करा</span>
               </button>
-              <audio ref={audioRef} src="/voting.aac" autoPlay className="hidden" />
+              <audio ref={beepAudioRef} src="/beep.mp3" preload="auto" className="hidden" />
+              <audio ref={votingAudioRef} src="/voting.aac" preload="auto" className="hidden" />
             </div>
           </div>
         </div>
